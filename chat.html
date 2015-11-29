@@ -1,0 +1,40 @@
+<script src="//srikrishnamurthy.github.io/RTCMultiConnection.js"></script>
+
+<input type=text id="input-text-chat" disabled>
+<button id="openNewSessionButton">Open New Room</button>
+
+<script>
+    var connection = new RTCMultiConnection();
+
+    connection.session = {
+        data: true // this line suggests that don't get/use audio/video; 
+            // only setup data connection
+    };
+
+    // setup signaling channel
+    connection.connect();
+
+    // open new session
+    document.getElementById('openNewSessionButton').onclick = function() {
+        connection.open();
+    };
+
+    connection.onopen = function(event) {
+        alert('Text chat has been opened between you and ' + event.userid);
+        document.getElementById('input-text-chat').disabled = false;
+    };
+
+    connection.onmessage = function(event) {
+        alert('Target user (event.userid) said: ' + event.data);
+    };
+
+    // send single file or multiple files concurrently!
+    document.getElementById('input-text-chat').onkeyup = function(e) {
+        if (e.keyCode != 13) return; // if it is not Enter-key
+        var value = this.value.replace(/^\s+|\s+$/g, '');
+        if (!value.length) return; // if empty-spaces
+
+        connection.send(value);
+        this.value = '';
+    };
+</script>
