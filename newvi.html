@@ -1,24 +1,38 @@
-<script src="//cdn.webrtc-experiment.com/RTCMultiConnection.js"></script>
-<script src="//cdn.webrtc-experiment.com/socket.io.js"> </script>
-<script src="//cdn.webrtc-experiment.com/RTCPeerConnection-v1.5.js"> </script>
-<script src="//cdn.webrtc-experiment.com/video-conferencing/conference.js"> </script>
-
-<button id="openNewSessionButton">Open New Room</button>
+<script src="//www.webrtc-experiment.com/meeting.js"></script>
 <script>
-    var connection = new RTCMultiConnection();
-    // easiest way to customize what you need!
-    connection.session = {
-        audio: true,
-        video: true
-    };
-    // on getting local or remote media stream
-    connection.onstream = function(e) {
-        document.body.appendChild(e.mediaElement);
-    };
-    // setup signaling channel
-    connection.connect();
-    // open new session
-    document.querySelector('#openNewSessionButton').onclick = function() {
-        connection.open();
-    };
+var meeting = new Meeting('meeting-unique-id');
+
+// on getting local or remote streams
+meeting.onaddstream = function(e) {
+    // e.type == 'local' ---- it is local media stream
+    // e.type == 'remote' --- it is remote media stream
+    document.body.appendChild(e.video);
+};
+
+// custom signaling channel
+// you can use each and every signaling channel
+// any websocket, socket.io, or XHR implementation
+// any SIP server
+// anything! etc.
+meeting.openSignalingChannel = function(callback) {
+    return io.connect().on('message', callback);
+};
+
+// check pre-created meeting rooms
+// it is useful to auto-join
+// or search pre-created sessions
+meeting.check('meeting room name');
+
+document.getElementById('setup-new-meeting').onclick = function() {
+    meeting.setup('meeting room name');
+};
+
+// if someone leaves; just remove his video
+meeting.onuserleft = function(userid) {
+    var video = document.getElementById(userid);
+    if(video) video.parentNode.removeChild(video);
+};
+
+// to leave a meeting room
+meeting.leave();
 </script>
