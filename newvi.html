@@ -1,38 +1,104 @@
-<script src="//www.webrtc-experiment.com/meeting.js"></script>
+<script src="//cdn.webrtc-experiment.com/socket.io.js"> </script>
+<script src="//cdn.webrtc-experiment.com/RTCPeerConnection-v1.5.js"> </script>
+<script src="//cdn.webrtc-experiment.com/video-conferencing/conference.js"> </script>
+
+<button id="setup-new-room">Setup New Conference</button>
+<table style="width: 100%;" id="rooms-list"></table>
+<div id="videos-container"></div>
+
 <script>
-var meeting = new Meeting('meeting-unique-id');
+var config = {
+    openSocket: function (config) {
+        var SIGNALING_SERVER = 'https://webrtc-signaling.nodejitsu.com:443/',
+            defaultChannel = location.href.replace(/\/|:|#|%|\.|\[|\]/g, '');
 
-// on getting local or remote streams
-meeting.onaddstream = function(e) {
-    // e.type == 'local' ---- it is local media stream
-    // e.type == 'remote' --- it is remote media stream
-    document.body.appendChild(e.video);
+        var channel = config.channel || defaultChannel;
+        var sender = Math.round(Math.random() * 999999999) + 999999999;
+
+        io.connect(SIGNALING_SERVER).emit('new-channel', {
+            channel: channel,
+            sender: sender
+        });
+
+        var socket = io.connect(SIGNALING_SERVER + channel);
+        socket.channel = channel;
+        socket.on('connect', function () {
+            if (config.callback) config.callback(socket);
+        });
+
+        socket.send = function (message) {
+            socket.emit('message', {
+                sender: sender,
+                data: message
+            });
+        };
+
+        socket.on('message', config.onmessage);
+    },
+    onRemoteStream: function (media) {
+        var video = media.video;
+        video.setAttribute('controls', true);
+        video.setAttribute('id', media.stream.id);
+        videosContainer.insertBefore(video, videosContainer.firstChild);
+        video.play();
+    },
+    onRemoteStreamEnded: function (stream) {
+        var video = document.getElementById(stream.id);
+        if (video) video.parentNode.removeChild(video);
+    },
+    onRoomFound: function (room) {
+        var alreadyExist = document.querySelector('button[data-broadcaster="' + room.broadcaster + '"]');
+        if (alreadyExist) return;
+
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td><strong>' + room.roomName + '</strong> shared a conferencing room with you!</td>' +
+            '<td><button class="join">Join</button></td>';
+        roomsList.insertBefore(tr, roomsList.firstChild);
+
+        var joinRoomButton = tr.querySelector('.join');
+        joinRoomButton.setAttribute('data-broadcaster', room.broadcaster);
+        joinRoomButton.setAttribute('data-roomToken', room.broadcaster);
+        joinRoomButton.onclick = function () {
+            this.disabled = true;
+
+            var broadcaster = this.getAttribute('data-broadcaster');
+            var roomToken = this.getAttribute('data-roomToken');
+            captureUserMedia(function () {
+                conferenceUI.joinRoom({
+                    roomToken: roomToken,
+                    joinUser: broadcaster
+                });
+            });
+        };
+    }
 };
 
-// custom signaling channel
-// you can use each and every signaling channel
-// any websocket, socket.io, or XHR implementation
-// any SIP server
-// anything! etc.
-meeting.openSignalingChannel = function(callback) {
-    return io.connect().on('message', callback);
+var conferenceUI = conference(config);
+var videosContainer = document.getElementById('videos-container') || document.body;
+var roomsList = document.getElementById('rooms-list');
+
+document.getElementById('setup-new-room').onclick = function () {
+    this.disabled = true;
+    captureUserMedia(function () {
+        conferenceUI.createRoom({
+            roomName: 'Anonymous'
+        });
+    });
 };
 
-// check pre-created meeting rooms
-// it is useful to auto-join
-// or search pre-created sessions
-meeting.check('meeting room name');
+function captureUserMedia(callback) {
+    var video = document.createElement('video');
+    video.setAttribute('autoplay', true);
+    video.setAttribute('controls', true);
+    videosContainer.insertBefore(video, videosContainer.firstChild);
 
-document.getElementById('setup-new-meeting').onclick = function() {
-    meeting.setup('meeting room name');
-};
-
-// if someone leaves; just remove his video
-meeting.onuserleft = function(userid) {
-    var video = document.getElementById(userid);
-    if(video) video.parentNode.removeChild(video);
-};
-
-// to leave a meeting room
-meeting.leave();
+    getUserMedia({
+        video: video,
+        onsuccess: function (stream) {
+            config.attachStream = stream;
+            video.setAttribute('muted', true);
+            callback();
+        }
+    });
+}
 </script>
