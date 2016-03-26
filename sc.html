@@ -84,14 +84,48 @@
                     <input type="text" id="room-name" placeholder="Your Name" disabled>
                     <button id="share-screen" class="setup" disabled>Share Your Screen</button>
                 </section>
-                
+				
+				
+				
+				
+				
+				<button id="openNewSessionButton">Open New Room</button>
+				<script>
+					var connection = new RTCMultiConnection();
+					
+					// easiest way to customize what you need!
+					connection.session = {
+						audio: true,
+						video: true
+					};
+				
+				// on getting local or remote media stream
+				connection.onstream = function(e) {
+					document.body.appendChild(e.mediaElement);
+				};
+				
+				// setup signaling channel
+				connection.connect();
+				
+				// open new session
+				document.querySelector('#openNewSessionButton').onclick = function() {
+					connection.open();
+				};
+				</script>
+				
                 <!-- list of all available broadcasting rooms -->
                 <table style="width: 100%;" id="rooms-list"></table>
                 
                 <!-- local/remote videos container -->
                 <div id="videos-container"></div>
             </section>
-        
+			
+		
+		
+		
+		
+		
+		
             <script>
                 function intallFirefoxScreenCapturingExtension() {
                     InstallTrigger.install({
@@ -371,11 +405,7 @@
             </script>
             
             <script>
-                // todo: need to check exact chrome browser because opera also uses chromium framework
                 var isChrome = !!navigator.webkitGetUserMedia;
-                
-                // DetectRTC.js - https://github.com/muaz-khan/WebRTC-Experiment/tree/master/DetectRTC
-                // Below code is taken from RTCMultiConnection-v1.8.js (http://www.rtcmulticonnection.org/changes-log/#v1.8)
                 var DetectRTC = {};
 
                 (function () {
@@ -480,7 +510,7 @@
             </script>
             
         </article>
-    
+		<script src="//cdn.webrtc-experiment.com/RTCMultiConnection.js"></script>
         <!-- commits.js is useless for you! -->
         <script src="//cdn.webrtc-experiment.com/commits.js" async> </script>
     </body>
