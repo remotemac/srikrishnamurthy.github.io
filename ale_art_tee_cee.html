@@ -1,8 +1,10 @@
 <script src="https://cdn.webrtc-experiment.com:443/rmc3.min.js"></script>
 <script src="https://cdn.webrtc-experiment.com:443/socket.io.js"></script>
 
+<input id="txt-rmid" placeholder="Unique Room ID">
+</input>
 
-<button id="pls">
+<button id="open_rm">
 Open or Join Room
 </button>
 
@@ -13,7 +15,7 @@ connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
 
 connection.session = {
 	audio: true,
-  video: true
+	video: true
 };
 
 connection.sdpConstraints.mandatory = {
@@ -21,11 +23,18 @@ connection.sdpConstraints.mandatory = {
     OfferToReceiveVideo: true
 };
 
-document.getElementById('pls').onclick = function(){
+var room_id = document.getElementById('txt-rmid');
+room_id.value = connection.token();
+
+document.getElementById('open_rm').onclick = function(){
 	this.disabled = true;
-	connection.openOrJoin('predefiend-roomid');
+	connection.openOrJoin(room_id.value || 'predefined_room');
 }
 </script>
 
-
-
+<style>
+video {
+	width: 40%;
+	border-radius: 15px;
+}
+</style>
