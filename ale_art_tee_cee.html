@@ -1,0 +1,31 @@
+<script src="https://cdn.webrtc-experiment.com:443/rmc3.min.js"></script>
+<script src="https://cdn.webrtc-experiment.com:443/socket.io.js"></script>
+
+
+<button id="pls">
+Open or Join Room
+</button>
+
+<script>
+var connection = new RTCMultiConnection();
+
+connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+
+connection.session = {
+	audio: true,
+  video: true
+};
+
+connection.sdpConstraints.mandatory = {
+    OfferToReceiveAudio: true,
+    OfferToReceiveVideo: true
+};
+
+document.getElementById('pls').onclick = function(){
+	this.disabled = true;
+	connection.openOrJoin('predefiend-roomid');
+}
+</script>
+
+
+
