@@ -1,106 +1,106 @@
 <script src="https://cdn.webrtc-experiment.com:443/rmc3.min.js"></script>
 <script src="https://cdn.webrtc-experiment.com:443/socket.io.js"></script>
-  <script src="https://cdn.firebase.com/js/client/2.2.1/firebase.js"></script>
-  <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js'></script>
+<script src="https://cdn.firebase.com/js/client/2.2.1/firebase.js"></script>
+<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js'></script>
+
 <hr>
 
-<input id="txt-rmid" placeholder="Enter a Room ID">
-</input>
+<input id="txt-rmid" placeholder="Enter a Room ID"></input>
 
-<button id="gen_rm">
-Generate Random Room ID 
-</button>
+<button id="gen_rm"> Generate Random Room ID </button>
+<button id="open_rm"> Open or Join Room </button>
 
-<button id="open_rm">
-Open or Join Room
-</button>
+<hr>
+<div id="jawn" class="example-chat l-demo-container">
+    <header>Text Chat:</header>
+
+    <div class='example-chat-toolbar'>
+        <label for="nameInput">Username:</label>
+        <input type='text' id='nameInput' placeholder='enter a username...'>
+    </div>
+
+    <ul id='example-messages' class="example-chat-messages"></ul>
+
+    <footer>
+        <input type='text' id='messageInput' placeholder='Type a message...'>
+    </footer>
+</div>
+<hr>
 
 <script>
-var connection = new RTCMultiConnection();
+    var connection = new RTCMultiConnection();
 
-connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+    connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
 
-connection.session = {
-	audio: true,
-	video: true
-};
+    connection.session = {
+        audio: true,
+        video: true
+    };
 
-connection.sdpConstraints.mandatory = {
-    OfferToReceiveAudio: true,
-    OfferToReceiveVideo: true
-};
+    connection.sdpConstraints.mandatory = {
+        OfferToReceiveAudio: true,
+        OfferToReceiveVideo: true
+    };
 
-var room_id = document.getElementById('txt-rmid');
+    var room_id = document.getElementById('txt-rmid');
 
-document.getElementById('gen_rm').onclick = function(){
-	room_id.value = connection.token();
-}
+    document.getElementById('gen_rm').onclick = function() {
+        room_id.value = connection.token();
+    }
 
-document.getElementById('open_rm').onclick = function(){
-	this.disabled = true;
-	connection.openOrJoin(room_id.value || 'predefined_room');
-}
+    document.getElementById('open_rm').onclick = function() {
+        this.disabled = true;
+        connection.openOrJoin(room_id.value || 'predefined_room');
+        toggle_visibility('jawn');
+    }
+
+    var messagesRefJ = new Firebase('https://alistchatserver.firebaseio.com');
+    var messagesRef = messagesRefJ.push();
+    var messageField = $('#messageInput');
+    var nameField = $('#nameInput');
+    var messageList = $('#example-messages');
+
+    messageField.keypress(function(e) {
+        if (e.keyCode == 13) {
+            var username = nameField.val() + " ";
+            var message = messageField.val();
+            messagesRef.push({
+                name: username,
+                text: message
+            });
+            messageField.val('');
+        }
+    });
+
+    messagesRef.limitToLast(10).on('child_added', function(snapshot) {
+        //GET DATA
+        var data = snapshot.val();
+        var username = data.name || "anonymous";
+        var message = data.text;
+
+        var messageElement = $("<li>");
+        var nameElement = $("<strong class='example-chat-username'></strong>")
+        nameElement.text(username);
+        messageElement.text(message).prepend(nameElement);
+
+        messageList.append(messageElement)
+
+        messageList[0].scrollTop = messageList[0].scrollHeight;
+    });
+
+    function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        if (e.style.display == 'block') {
+            e.style.display = 'none';
+        } else {
+            e.style.display = 'block';
+        }
+    }
 </script>
 
 <style>
-video {
-	width: 40%;
-	border-radius: 15px;
-}
-</style>
-
-
-<hr>
-
-
-<div class="example-chat l-demo-container">
-  <header>Text Chat:</header>
-
-  <div class='example-chat-toolbar'>
-    <label for="nameInput">Username:</label>
-    <input type='text' id='nameInput' placeholder='enter a username...'>
-  </div>
-
-  <ul id='example-messages' class="example-chat-messages"></ul>
-
-  <footer>
-    <input type='text' id='messageInput'  placeholder='Type a message...'>
-  </footer>
-</div>
-
-<script>
-  var messagesRefJ = new Firebase('https://alistchatserver.firebaseio.com');
-  var messagesRef = messagesRefJ.push();
-  var messageField = $('#messageInput');
-  var nameField = $('#nameInput');
-  var messageList = $('#example-messages');
-
-
-  messageField.keypress(function (e) {
-    if (e.keyCode == 13) {
-      var username = nameField.val() + " ";
-      var message = messageField.val();
-      messagesRef.push({name:username, text:message});
-      messageField.val('');
+    video {
+        width: 40%;
+        border-radius: 15px;
     }
-  });
-
-  messagesRef.limitToLast(10).on('child_added', function (snapshot) {
-    //GET DATA
-    var data = snapshot.val();
-    var username = data.name || "anonymous";
-    var message = data.text;
-
-    var messageElement = $("<li>");
-    var nameElement = $("<strong class='example-chat-username'></strong>")
-    nameElement.text(username);
-    messageElement.text(message).prepend(nameElement);
-
-    messageList.append(messageElement)
-
-    messageList[0].scrollTop = messageList[0].scrollHeight;
-  });
-</script>
-
-
-<hr>
+</style>
