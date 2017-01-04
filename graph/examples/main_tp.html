@@ -22,7 +22,8 @@
         google.setOnLoadCallback(drawVisualization);
 
         function custom(x, y, t) {
-            return Math.sin(x/50 + t/10) * Math.cos(y/50 + t/10) * 50 + 50;
+            //return Math.sin(x/50 + t/10) * Math.cos(y/50 + t/10) * 50 + 50;
+            return Math.cos(t);
         }
 
         // Called when the Visualization API is loaded.
